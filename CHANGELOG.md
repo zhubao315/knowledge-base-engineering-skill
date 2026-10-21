@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- GitHub homepage README：定位、模块表、快速开始、安全模型、测试与边界。
+- GitHub Actions：Python 3.10 / 3.11 / 3.12 跑 21 项回归测试 + 只读 smoke test。
+
 ## 1.0.0 — 2026-10-21
 
 - 主入口 `SKILL.md`：S0–S7 状态机、五项输入、五状态、权限与证据规范。

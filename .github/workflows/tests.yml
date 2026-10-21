@@ -1,0 +1,35 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run skill regression tests
+        run: python3 tests/run_tests.py
+
+      - name: Read-only smoke test
+        run: |
+          python3 scripts/inventory.py tests/fixtures/vault --json > /tmp/inventory.json
+          python3 scripts/link_audit.py tests/fixtures/vault --json > /tmp/links.json
+          python3 scripts/placeholder_audit.py tests/fixtures/vault --json > /tmp/placeholders.json
