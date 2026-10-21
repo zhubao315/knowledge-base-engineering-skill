@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "timestamp": "2026-10-21T00:00:00+08:00",
+  "scope": {"root": "tests/fixtures/vault", "include": ["**/*.md"]},
+  "metrics": [
+    {
+      "name": "inventory",
+      "value": 9,
+      "status": "PASS",
+      "timestamp": "2026-10-21T00:00:00+08:00",
+      "scope": "tests/fixtures/vault",
+      "method": "inventory.py"
+    }
+  ]
+}

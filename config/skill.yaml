@@ -1,0 +1,50 @@
+name: knowledge-base-engineering
+version: "1.0.0"
+ruleset_version: "1.0.0"
+metrics_version: "1.0.0"
+default_mode: read_only
+entry: SKILL.md
+
+references:
+  architecture: references/architecture.md
+  admission: references/admission-gates.md
+  lifecycle: references/knowledge-lifecycle.md
+  health: references/health-metrics.md
+  topology: references/topology.md
+  permissions: references/permissions.md
+  incident: references/incident-response.md
+  operations: references/operations.md
+
+scripts:
+  inventory: scripts/inventory.py
+  metadata: scripts/metadata_audit.py
+  links: scripts/link_audit.py
+  placeholders: scripts/placeholder_audit.py
+  report_validate: scripts/report_validate.py
+  scaffold: scripts/scaffold_obsidian.py
+
+adapters:
+  filesystem: adapters/filesystem.md
+  obsidian: adapters/obsidian.md
+  notion: adapters/notion.md
+  rag_agent: adapters/rag-agent.md
+
+default_scope:
+  include: ["**/*.md"]
+  exclude:
+    - ".git/**"
+    - ".obsidian/**"
+    - ".runtime/**"
+    - ".venv/**"
+    - "node_modules/**"
+    - "attachments/**"
+    - "archive/**"
+
+required_inputs:
+  - knowledge_base_scope
+  - task_and_acceptance
+  - candidate_and_evidence
+  - permission_boundary
+  - rules_and_metrics_version
+
+statuses: [PASS, FAIL, NOT_RUN, BLOCKED, NEEDS_REVIEW]

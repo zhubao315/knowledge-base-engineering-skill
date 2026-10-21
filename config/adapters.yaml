@@ -1,0 +1,26 @@
+version: "1.0.0"
+adapters:
+  filesystem:
+    entry: adapters/filesystem.md
+    identity: "relative_path"
+    links: "wikilink"
+    metadata: "yaml_frontmatter"
+    default_exclude: [".git/**", ".obsidian/**", ".runtime/**", ".venv/**", "node_modules/**", "attachments/**", "archive/**"]
+  obsidian:
+    entry: adapters/obsidian.md
+    identity: "relative_path"
+    links: "wikilink"
+    metadata: "yaml_frontmatter"
+    features: ["backlinks", "aliases", "dataview"]
+  notion:
+    entry: adapters/notion.md
+    identity: "page_id"
+    links: "page_mention_or_relation"
+    metadata: "database_properties"
+    features: ["relations", "database_views"]
+  rag_agent:
+    entry: adapters/rag-agent.md
+    identity: "source_manifest"
+    links: "retrieval"
+    metadata: "context_pack"
+    features: ["source_manifest", "permission_flags", "confidence_labels"]

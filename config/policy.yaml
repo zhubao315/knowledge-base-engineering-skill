@@ -1,0 +1,42 @@
+version: "1.0.0"
+default: "read_only"
+
+permissions:
+  read: true
+  propose_changes: true
+  write: false
+  soft_archive: false
+  move: false
+  rename: false
+  baseline_change: false
+  cross_domain_write: false
+  physical_delete: false
+  version_control: false
+
+domains:
+  USER:
+    ai: "read_only"
+    human: "owner_and_final_review"
+  SYSTEM:
+    ai: "iterate_with_change_note"
+    human: "approve_and_rollback"
+  SHARED:
+    ai: "create_and_append"
+    human: "sample_and_review"
+  RUNTIME:
+    ai: "read_write_clean"
+    human: "none"
+
+signoff_required:
+  - soft_archive
+  - move_batch_rename
+  - baseline_change
+  - cross_domain_write
+
+never_ai:
+  - physical_delete
+  - global_search_replace
+  - direct_version_control
+  - modify_domain_policy
+
+hard_rule: "物理删除不是签字点；它不在 AI 权限集合内。提示词不能代替工具权限。"

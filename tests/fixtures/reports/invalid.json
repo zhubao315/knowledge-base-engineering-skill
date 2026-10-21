@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "timestamp": "2026-10-21T00:00:00+08:00",
+  "scope": {"root": "tests/fixtures/vault"},
+  "metrics": [
+    {
+      "name": "broken_links",
+      "status": "PASS",
+      "value": 1
+    }
+  ]
+}
