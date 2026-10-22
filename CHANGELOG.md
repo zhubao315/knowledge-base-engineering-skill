@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0 — 2026-10-22
+
+- 新增 `oesa-core/`：`O-observe.md`、`E-evaluate.md`、`S-standardize.md`、`A-apply.md`，把 Skill 重构成 OESA 四阶段调度总线。
+- `SKILL.md` 重写为轻量主入口：触发语、环境预检、OESA 总线、S0–S7、权限硬约束、按需加载。
+- `README.md` 重写为新手入口：30 秒上手、Claude/Cursor/Gemini 安装、环境降级、安全模型、核心 4 件与工程增强件。
+- `oesa-core/` 四个模块补齐体检 12 项、G0–G7、L0–L7、四域权限与签字点。
+- `config/skill.yaml` 增加 `oesa_core` 映射，版本升至 1.2.0。
+- 包内文件数 50 → 54；回归测试仍为 25 项。
+
 ## 1.1.0 — 2026-10-22
 
 - 环境自适应初始化：新增 `scripts/detect_environment.py`，探测 `KBE_SANDBOX_ROOT`（默认 `/app/.hermes/obsidian`）是否可达。

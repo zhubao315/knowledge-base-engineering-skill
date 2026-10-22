@@ -7,7 +7,7 @@
 把知识库当成一套持续运行的信息系统来治理，  
 而不是替用户整理几篇笔记。
 
-![version](https://img.shields.io/badge/version-1.1.0-blue)
+![version](https://img.shields.io/badge/version-1.2.0-blue)
 ![tests](https://github.com/zhubao315/knowledge-base-engineering-skill/actions/workflows/tests.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![python](https://img.shields.io/badge/python-3.10%2B-3776AB)
@@ -49,11 +49,23 @@
 
 八个模块共享同一套指标注册表、权限策略、文件身份规则和审计机制。模块是功能边界，不是八套规则。
 
+## 30 秒上手
+
+把本目录加载进任意支持 Skill / 项目规则的 Agent，然后直接说：
+
+> 我的知识库有点乱，帮我跑一下 OESA 观测急症。
+
+一个合格的回答应该先做三件事，而不是立刻列一堆建议：
+
+1. **O-观测**：确认当前是本地还是沙箱，检查冲突副本、0 字节文件、断链突增等急症。
+2. **E-评估**：确认库范围、权限边界、口径版本；缺项就提问或标 `BLOCKED`。
+3. **S/A 路由**：只读扫描后给出体检底稿、变更计划和软归档候选；物理删除不在权限集合内。
+
+如果它第一句就报“路径不存在”，或者直接说“已帮你删除”，说明它没有按这个包工作。
+
 ## 快速开始
 
-### 1. 作为 Agent Skill 加载
-
-把整个目录复制到你的 Agent 技能目录，或作为项目级 Skill 加载。
+### 1. 一键安装
 
 ```bash
 git clone https://github.com/zhubao315/knowledge-base-engineering-skill.git
@@ -66,6 +78,18 @@ python3 tests/run_tests.py
 ```text
 25 passed, 0 failed
 ```
+
+**Claude Code / Claude Skills**：把整个目录复制到用户技能目录，或作为项目级 Skill 加载。
+
+```bash
+mkdir -p ~/.claude/skills
+cp -R knowledge-base-engineering-skill ~/.claude/skills/knowledge-base-engineering
+```
+
+**Cursor**：把 `SKILL.md` 放进项目规则（如 `.cursor/rules/`），把 `oesa-core/` 留在项目内供引用；首次使用先让它读 `SKILL.md` 的“环境预检”和“权限与硬约束”。
+
+**Gemini CLI / 其他 Agent**：把 `SKILL.md` 作为项目指令，`oesa-core/` 与 `templates/` 作为按需引用文件。不要在系统提示里一次塞进整本书；按任务加载对应阶段。
+
 
 ### 2. 先探测环境，再决定建库方式
 
@@ -147,19 +171,29 @@ python3 scripts/report_validate.py <report.json>
 
 ## 仓库结构
 
+**核心 4 件**（新手先读这四样）：
+
 ```text
 knowledge-base-engineering/
-├── SKILL.md               # 主入口：S0–S7 状态机、权限、交付
-├── references/            # 9 份权威规则
-├── templates/             # 5 份标准交付物
+├── SKILL.md               # 主入口：触发语、环境探测、OESA 总线、权限
+├── oesa-core/             # 4 阶段规则：O 观测 / E 评估 / S 固化 / A 调用
+├── templates/             # 5 份交付物：体检、变更、退役、口径、事故
+└── README.md
+```
+
+**工程增强件**（可选，但建议保留）：
+
+```text
+├── references/            # 9 份详细规则
 ├── scripts/               # 7 个脚本：6 个只读 + 1 个安全 scaffold
 ├── adapters/              # 文件系统 / Obsidian / Notion / RAG
 ├── config/                # 规则版本、指标、权限、适配
 ├── tests/                 # 9 个异常样本 + 25 项回归测试
 ├── CHANGELOG.md
-├── README.md
 └── LICENSE
 ```
+
+主入口只做路由；OESA 规则放在 `oesa-core/`；脚本与测试保证它能被复跑，而不是只靠一段提示词。
 
 ## 测试
 
@@ -214,7 +248,7 @@ python3 scripts/detect_environment.py --json
 ## 当前边界
 
 - 扫描器是启发式：不解析 Dataview / Canvas / Notion 全部属性。
-- 孤岛是原始无入链列表；日记 / 归档 / uWise / 出版等豁免必须人工分类。
+- 孤岛是原始无入链列表；日记 / 归档 / 词条库 / 出版等豁免必须人工分类。
 - 跨库引用、块引用、标题级断链需人工抽检。
 - Notion API、RAG 适配尚未实机联调。
 - 未在 10k 库上做性能基准；fixture 只证明流程与权限，不证明生产规模。
@@ -222,7 +256,7 @@ python3 scripts/detect_environment.py --json
 
 ## 版本
 
-- **v1.1.0**：主入口、9 references、5 templates、7 scripts、4 adapters、9 fixtures、25 tests；新增环境探测与 `para` profile。
+- **v1.2.0**：主入口、4 份 oesa-core、9 references、5 templates、7 scripts、4 adapters、9 fixtures、25 tests；新增 OESA 四阶段调度与环境降级。
 - 规则修订后先跑 `tests/run_tests.py`，再更新 `CHANGELOG.md` 与 `config/skill.yaml`。
 
 ## License
