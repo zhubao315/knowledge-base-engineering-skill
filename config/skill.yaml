@@ -1,5 +1,5 @@
 name: knowledge-base-engineering
-version: "1.0.0"
+version: "1.1.0"
 ruleset_version: "1.0.0"
 metrics_version: "1.0.0"
 default_mode: read_only
@@ -14,6 +14,7 @@ references:
   permissions: references/permissions.md
   incident: references/incident-response.md
   operations: references/operations.md
+  environment: references/environment.md
 
 scripts:
   inventory: scripts/inventory.py
@@ -21,6 +22,7 @@ scripts:
   links: scripts/link_audit.py
   placeholders: scripts/placeholder_audit.py
   report_validate: scripts/report_validate.py
+  detect_environment: scripts/detect_environment.py
   scaffold: scripts/scaffold_obsidian.py
 
 adapters:

@@ -1,9 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — 2026-10-22
 
-- GitHub homepage README：定位、模块表、快速开始、安全模型、测试与边界。
-- GitHub Actions：Python 3.10 / 3.11 / 3.12 跑 21 项回归测试 + 只读 smoke test。
+- 环境自适应初始化：新增 `scripts/detect_environment.py`，探测 `KBE_SANDBOX_ROOT`（默认 `/app/.hermes/obsidian`）是否可达。
+- 本地分支新增 `para` profile（`00-Inbox / 01-Projects / 02-Areas / 03-Resources / 04-Archives`）；`--profile auto` 本地→para、沙箱→ulife。
+- 新增 `references/environment.md`：沙箱镜像只出计划，实际同步交外部工具 + 人批准；本地不展示沙箱路径。
+- `scaffold_obsidian.py` 增加 `--detect` / `--sandbox-root`；目标缺失时给本地路径建议，不报死。
+- 测试从 21 增至 25：环境探测、auto 本地 PARA、auto 沙箱 uLife。
+- GitHub homepage README + GitHub Actions（Python 3.10/3.11/3.12）。
 
 ## 1.0.0 — 2026-10-21
 

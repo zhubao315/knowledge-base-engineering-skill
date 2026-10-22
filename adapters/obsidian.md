@@ -29,6 +29,16 @@ tags:
 
 ## 新库 provisioning
 
+创建前先探测环境：
+
+```bash
+python3 scripts/detect_environment.py --json
+```
+
+- 本地环境：不展示 `/app/.hermes/obsidian`，默认 `para` profile。
+- 沙箱可达：可生成镜像计划；实际同步交外部工具 + 人批准。
+- `--profile auto`：本地 → para，沙箱 → ulife。
+
 `scripts/scaffold_obsidian.py` 可在**新目录或空目录**创建 starter vault：
 
 ```bash
@@ -39,6 +49,7 @@ python3 scripts/scaffold_obsidian.py --target <new-or-empty-dir> --profile ulife
 python3 scripts/scaffold_obsidian.py --target <new-or-empty-dir> --profile ulife --execute
 ```
 
+- `para`：00-Inbox / 01-Projects / 02-Areas / 03-Resources / 04-Archives（本地默认）。
 - `minimal`：00-META / 01-BRAIN / 02-BUILD / 07-SOURCES / 09-REFERENCE / 99-归档。
 - `ulife`：在 minimal 上补 01-BRAIN 的 11-概念 / 12-模型 / 13-框架 / 14-原则 / 15-洞察，以及 02-BUILD/22-uSkill、02-BUILD/28-创作、07-SOURCES/74-影音、09-REFERENCE/93-脚本。
 - 拒绝非空目录；不覆盖、不移动、不删除；写 `00-META/scaffold-manifest.json`。

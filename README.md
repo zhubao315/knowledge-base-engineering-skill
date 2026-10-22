@@ -7,7 +7,7 @@
 把知识库当成一套持续运行的信息系统来治理，  
 而不是替用户整理几篇笔记。
 
-![version](https://img.shields.io/badge/version-1.0.0-blue)
+![version](https://img.shields.io/badge/version-1.1.0-blue)
 ![tests](https://github.com/zhubao315/knowledge-base-engineering-skill/actions/workflows/tests.yml/badge.svg)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![python](https://img.shields.io/badge/python-3.10%2B-3776AB)
@@ -64,10 +64,19 @@ python3 tests/run_tests.py
 预期：
 
 ```text
-21 passed, 0 failed
+25 passed, 0 failed
 ```
 
-### 2. 只读扫描一个现有库
+### 2. 先探测环境，再决定建库方式
+
+```bash
+python3 scripts/detect_environment.py --json
+```
+
+- 沙箱共享库可达：可以生成镜像/同步计划，但实际同步交给外部工具并由人批准。
+- 本地不可达：**不要**把 `/app/.hermes/obsidian` 当默认路径；按本地独立库处理。
+
+### 3. 只读扫描一个现有库
 
 ```bash
 python3 scripts/inventory.py <库根> --json
@@ -78,14 +87,15 @@ python3 scripts/link_audit.py <库根> --json
 
 默认不写任何文件。发现问题也不直接改原件。
 
-### 3. 安全创建新 Obsidian 库
+### 4. 安全创建新 Obsidian 库
 
 ```bash
 # 默认 dry-run：只打印计划，不落盘
-python3 scripts/scaffold_obsidian.py --target ~/new-vault --profile ulife
+# profile auto：本地→para，沙箱→ulife
+python3 scripts/scaffold_obsidian.py --target ~/new-vault
 
 # 确认后执行
-python3 scripts/scaffold_obsidian.py --target ~/new-vault --profile ulife --execute
+python3 scripts/scaffold_obsidian.py --target ~/new-vault --execute
 ```
 
 规则：
@@ -96,14 +106,15 @@ python3 scripts/scaffold_obsidian.py --target ~/new-vault --profile ulife --exec
 - 写 `00-META/scaffold-manifest.json`；
 - 不创建 `.obsidian/` 配置，Obsidian 打开后自己生成。
 
-两个 profile：
+三个 profile：
 
 | profile | 创建什么 | 适合 |
 |---|---|---|
+| `para` | `00-Inbox / 01-Projects / 02-Areas / 03-Resources / 04-Archives` | 本地默认，直觉最好 |
 | `minimal` | `00-META / 01-BRAIN / 02-BUILD / 07-SOURCES / 09-REFERENCE / 99-归档` | 先跑通一个最小库 |
-| `ulife` | 在 minimal 上补 `11-概念 / 12-模型 / 13-框架 / 14-原则 / 15-洞察`、`22-uSkill`、`28-创作`、`74-影音`、`93-脚本` | 想按 uLife 分层起步 |
+| `ulife` | 在 minimal 上补 `11-概念 / 12-模型 / 13-框架 / 14-原则 / 15-洞察`、`22-uSkill`、`28-创作`、`74-影音`、`93-脚本` | 沙箱默认 / 想按 uLife 分层起步 |
 
-### 4. 验证报告证据
+### 5. 验证报告证据
 
 ```bash
 python3 scripts/report_validate.py <report.json>
@@ -139,12 +150,12 @@ python3 scripts/report_validate.py <report.json>
 ```text
 knowledge-base-engineering/
 ├── SKILL.md               # 主入口：S0–S7 状态机、权限、交付
-├── references/            # 8 份权威规则
+├── references/            # 9 份权威规则
 ├── templates/             # 5 份标准交付物
-├── scripts/               # 6 个脚本：5 个只读 + 1 个安全 scaffold
+├── scripts/               # 7 个脚本：6 个只读 + 1 个安全 scaffold
 ├── adapters/              # 文件系统 / Obsidian / Notion / RAG
 ├── config/                # 规则版本、指标、权限、适配
-├── tests/                 # 9 个异常样本 + 21 项回归测试
+├── tests/                 # 9 个异常样本 + 25 项回归测试
 ├── CHANGELOG.md
 ├── README.md
 └── LICENSE
@@ -161,12 +172,12 @@ knowledge-base-engineering/
 - 占位 / 空标题
 - 归档与附件排除
 - 提示注入（只当数据，不执行）
-- scaffold：dry-run 不落盘、execute 创建、拒绝非空目录、ulife 分层
+- scaffold：dry-run 不落盘、execute 创建、拒绝非空目录、ulife 分层、环境探测、auto 本地 PARA / 沙箱 uLife
 
 当前结果：
 
 ```text
-21 passed, 0 failed
+25 passed, 0 failed
 0 fixture files changed
 0 deletes
 ```
@@ -186,6 +197,20 @@ knowledge-base-engineering/
 | 人类保留最终控制权 | 不可逆动作停在签字点 |
 | 不自证 | AI 不用自己的报告证明自己跑过 |
 
+## 环境自适应
+
+初始化不再假设 `/app/.hermes/obsidian` 一定存在：
+
+```bash
+python3 scripts/detect_environment.py --json
+```
+
+- `sandbox`：可生成镜像计划；实际同步由外部工具执行，必须人工批准。
+- `local`：切换到本地独立库，默认 `para`；绝不把沙箱路径当默认值。
+- `scaffold_obsidian.py --profile auto` 自动选择：本地 → `para`，沙箱 → `ulife`。
+
+详见 `references/environment.md`。
+
 ## 当前边界
 
 - 扫描器是启发式：不解析 Dataview / Canvas / Notion 全部属性。
@@ -197,7 +222,7 @@ knowledge-base-engineering/
 
 ## 版本
 
-- **v1.0.0**：主入口、8 references、5 templates、6 scripts、4 adapters、9 fixtures、21 tests。
+- **v1.1.0**：主入口、9 references、5 templates、7 scripts、4 adapters、9 fixtures、25 tests；新增环境探测与 `para` profile。
 - 规则修订后先跑 `tests/run_tests.py`，再更新 `CHANGELOG.md` 与 `config/skill.yaml`。
 
 ## License

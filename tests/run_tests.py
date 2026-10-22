@@ -97,6 +97,44 @@ def main() -> int:
     check("skill has five statuses", all(s in skill for s in ("PASS", "FAIL", "NOT_RUN", "BLOCKED", "NEEDS_REVIEW")))
 
     with tempfile.TemporaryDirectory() as td:
+        # Environment detection: local (default) vs sandbox (explicit readable dir)
+        local = subprocess.run(
+            [sys.executable, str(SCRIPTS / "detect_environment.py"),
+             "--sandbox-root", str(Path(td) / "missing"), "--json"],
+            capture_output=True, text=True,
+        )
+        ld = json.loads(local.stdout)
+        check("detect local environment", local.returncode == 0 and ld.get("environment") == "local" and ld.get("recommended_profile") == "para")
+
+        shared = Path(td) / "shared"
+        shared.mkdir()
+        sandbox = subprocess.run(
+            [sys.executable, str(SCRIPTS / "detect_environment.py"),
+             "--sandbox-root", str(shared), "--json"],
+            capture_output=True, text=True,
+        )
+        sd = json.loads(sandbox.stdout)
+        check("detect sandbox environment", sandbox.returncode == 0 and sd.get("environment") == "sandbox" and sd.get("recommended_profile") == "ulife")
+
+        local_target = Path(td) / "local-auto"
+        p = subprocess.run(
+            [sys.executable, str(SCRIPTS / "scaffold_obsidian.py"),
+             "--target", str(local_target), "--sandbox-root", str(Path(td) / "missing"),
+             "--execute", "--json"],
+            capture_output=True, text=True,
+        )
+        check("auto local chooses PARA", p.returncode == 0 and (local_target / "01-Projects").is_dir() and (local_target / "04-Archives").is_dir(), p.stdout + p.stderr)
+
+        sandbox_target = Path(td) / "sandbox-auto"
+        p = subprocess.run(
+            [sys.executable, str(SCRIPTS / "scaffold_obsidian.py"),
+             "--target", str(sandbox_target), "--sandbox-root", str(shared),
+             "--execute", "--json"],
+            capture_output=True, text=True,
+        )
+        check("auto sandbox chooses uLife", p.returncode == 0 and (sandbox_target / "01-BRAIN" / "11-概念").is_dir(), p.stdout + p.stderr)
+
+    with tempfile.TemporaryDirectory() as td:
         target = Path(td) / "dry-vault"
         p = subprocess.run([sys.executable, str(SCRIPTS / "scaffold_obsidian.py"), "--target", str(target), "--profile", "minimal", "--json"], capture_output=True, text=True)
         check("scaffold dry-run makes no directory", p.returncode == 0 and not target.exists(), p.stdout + p.stderr)

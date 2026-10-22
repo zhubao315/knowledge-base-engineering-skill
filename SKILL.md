@@ -1,11 +1,11 @@
 ---
 name: knowledge-base-engineering
 description: "知识库工程治理通用 Skill：按《知识库工程学》的诊断、准入、消化、拓扑、度量、审计、归档与 AI 上下文规则，对一个 Markdown / Obsidian / Notion / RAG 知识库做可测量、可复现、可回滚、可交接的治理。默认只读诊断，不直接修改知识库；物理删除永远不在 AI 权限集合内。"
-version: "1.0.0"
+version: "1.1.0"
 license: "MIT"
 title: "Knowledge Base Engineering — Skill"
 created: 2026-10-21
-updated: 2026-10-21
+updated: 2026-10-22
 tags:
   - "项目/知识库维护"
   - "维度/技能"
@@ -78,7 +78,26 @@ tags:
 
 最低配置见 `config/skill.yaml`。如果缺少范围、权限或规则版本，报告状态必须是 `BLOCKED` 或 `NEEDS_REVIEW`，不能写 `PASS`。
 
-## 5. 工作流：S0–S7
+## 5. 环境自适应：先探测，再问路径
+
+初始化或创建新库之前，先运行：
+
+```bash
+python3 scripts/detect_environment.py --json
+```
+
+它只读探测 `KBE_SANDBOX_ROOT`（默认 `/app/.hermes/obsidian`）是否可达：
+
+- **沙箱可达**：可以生成“镜像/双向同步”的**计划**；实际同步交给外部工具并由人批准，Skill 不自动执行。
+- **本地不可达**：**绝对不要**把 `/app/.hermes/obsidian` 当默认路径展示。改用本地分支：`para`（Inbox / Projects / Areas / Resources / Archives）、`minimal` 或 `ulife`，或让用户指定一个可读的本地导入源。
+
+`scaffold_obsidian.py` 的 `--profile auto` 会自动选择：sandbox → `ulife`，local → `para`。默认仍是 dry-run，目标必须为空目录。详见 `references/environment.md`。
+
+推荐本地话术：
+
+> 检测到当前处于本地环境，我们将初始化一个纯个人本地知识库。你希望创建在哪个本地路径？默认结构是 PARA；也可以选 uLife 分层或最小结构。
+
+## 6. 工作流：S0–S7
 
 ### S0 识别任务与检查输入
 
@@ -133,7 +152,7 @@ tags:
 
 输出报告、证据、变更记录、口径披露、未解决问题、下一次复测日。每次执行后回写规则或 Runbook；没有回写，不算闭环。
 
-## 6. 八个业务模块
+## 7. 八个业务模块
 
 | 模块 | 对应书中 | 主要动作 | 主要输出 |
 |---|---|---|---|
@@ -148,7 +167,7 @@ tags:
 
 八个模块共享同一个指标注册表、同一套权限策略、同一套文件身份规则、同一套审计机制。模块是功能边界，不是八套规则。
 
-## 7. 权限模型
+## 8. 权限模型
 
 | 操作 | AI 默认权限 | 执行要求 |
 |---|---|---|
@@ -164,7 +183,7 @@ tags:
 
 提示词不能代替工具权限：如果底层 Agent 仍持有删除工具，写“不要删”不等于安全。部署时先只挂只读工具，候选修改写隔离区，人工审批与执行分离，变更后用独立扫描器复验。详见 `references/permissions.md`。
 
-## 8. 输出与状态
+## 9. 输出与状态
 
 任何任务围绕四类交付物：
 
@@ -183,7 +202,7 @@ tags:
 
 **`NOT_RUN` 和 `BLOCKED` 不得计入 `PASS`。** 报告不能只写“健康度 92 分”或“断链已清零”，必须回答：谁用什么规则，在什么范围、什么时点检查，结果如何复验。
 
-## 9. 证据规范
+## 10. 证据规范
 
 “已完成/已修复/已清零/已通过”必须附：
 
@@ -197,7 +216,7 @@ tags:
 
 不能实际执行的动作，只能报告为建议或待执行。不能用自己的报告证明自己跑过；同一脚本再跑一遍不是独立复算。
 
-## 10. 完成条件
+## 11. 完成条件
 
 只有同时满足才可报告“完成”：
 
@@ -208,7 +227,7 @@ tags:
 - 验收通过，或失败项/风险已明确列出。
 - 交付物可被独立复核。
 
-## 11. 参考文件加载
+## 12. 参考文件加载
 
 按任务读取，不要一次全塞进上下文：
 
@@ -220,6 +239,7 @@ tags:
 - 权限：`references/permissions.md`
 - 事故：`references/incident-response.md`
 - 运营：`references/operations.md`
+- 环境：`references/environment.md`
 - 模板：`templates/`
 - 脚本：`scripts/`
 - 平台适配：`adapters/`
@@ -227,31 +247,35 @@ tags:
 
 规则冲突时不得自行拼接或默默覆盖：记录冲突、暂停受影响操作，交规则所有者确认。
 
-## 12. 快速开始
+## 13. 快速开始
 
 ```bash
 # 1. 只读清点（不修改任何文件）
 python3 scripts/inventory.py <库根> --json
 
-# 2. 元数据 / 占位 / 链接扫描
+# 2. 环境探测（不写库）
+python3 scripts/detect_environment.py --json
+
+# 3. 元数据 / 占位 / 链接扫描
 python3 scripts/metadata_audit.py <库根> --json
 python3 scripts/placeholder_audit.py <库根> --json
 python3 scripts/link_audit.py <库根> --json
 
-# 3. 验证报告口径
+# 4. 验证报告口径
 python3 scripts/report_validate.py <report.json>
 
-# 4. 安全创建新库（默认 dry-run；只允许新目录/空目录）
-python3 scripts/scaffold_obsidian.py --target <new-or-empty-dir> --profile ulife
-python3 scripts/scaffold_obsidian.py --target <new-or-empty-dir> --profile ulife --execute
+# 5. 安全创建新库（默认 dry-run；只允许新目录/空目录）
+# profile auto：本地→para，沙箱→ulife
+python3 scripts/scaffold_obsidian.py --target <new-or-empty-dir>
+python3 scripts/scaffold_obsidian.py --target <new-or-empty-dir> --execute
 
-# 5. 跑技能回归测试
+# 6. 跑技能回归测试
 python3 tests/run_tests.py
 ```
 
 默认只读。需要写入时，先出 `templates/change-plan.md`，经人签字后再用受控工具执行。`scaffold_obsidian.py` 只负责“新库/空目录”的 provisioning：默认 dry-run，拒绝非空目录，不删除、不覆盖、不移动；它不修改现有库。
 
-## 13. 最终原则
+## 14. 最终原则
 
 ```text
 收藏不是资产，架构与运营才是。
