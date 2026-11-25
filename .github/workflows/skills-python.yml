@@ -89,11 +89,10 @@ jobs:
             if [ "$STRICT" = "true" ]; then echo "FAIL: STRICT but no tests"; exit 1; fi
             exit 0
           fi
-          if python3 -c 'import pytest' 2>/dev/null; then
-            python3 -m pytest -q
-          else
-            python3 -m unittest discover -s tests -v
-          fi
+          # Most skill repos use pytest-style test functions, not unittest.TestCase.
+          # pytest is cheap and deterministic; install it when tests exist.
+          python3 -m pip install -q pytest
+          python3 -m pytest -q
 
       - name: Gate D - SKILL.md frontmatter
         shell: bash
