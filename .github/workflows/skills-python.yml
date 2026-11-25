@@ -1,0 +1,137 @@
+name: Python Agent Skill CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: skill-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  STRICT: ${{ vars.SKILL_STRICT == 'true' }}
+  SKILL_REQUIRE_SKILL_MD: ${{ vars.SKILL_REQUIRE_SKILL_MD != 'false' }}
+
+jobs:
+  skill-checks:
+    name: Skill structure, syntax, schema, tests, version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies if declared
+        shell: bash
+        run: |
+          if [ -f requirements.txt ]; then
+            python3 -m pip install -q -r requirements.txt
+          elif [ -f pyproject.toml ]; then
+            python3 -m pip install -q -e .
+          else
+            echo "SKIP: no dependency manifest; zero-dependency skill assumed"
+          fi
+
+      - name: Gate A - compileall
+        shell: bash
+        run: |
+          mapfile -d '' PYFILES < <(find . -type f -name '*.py' -not -path './.git/*' -print0)
+          if [ ${#PYFILES[@]} -eq 0 ]; then
+            echo "SKIP: no *.py sources"
+            if [ "$STRICT" = "true" ]; then echo "FAIL: STRICT but no Python sources"; exit 1; fi
+            exit 0
+          fi
+          python3 -m compileall -q "${PYFILES[@]}"
+          echo "OK: compiled ${#PYFILES[@]} Python file(s)"
+
+      - name: Gate B - YAML / JSON parse
+        shell: bash
+        run: |
+          python3 -m pip install -q pyyaml
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+          import yaml
+          SKIP={".git","node_modules","__pycache__","dist","build"}
+          yamls=sorted(p for p in Path(".").rglob("*") if p.is_file() and p.suffix.lower() in (".yml",".yaml") and not set(p.parts)&SKIP)
+          jsons=sorted(p for p in Path(".").rglob("*.json") if p.is_file() and not set(p.parts)&SKIP)
+          if not yamls and not jsons:
+              print("SKIP: no YAML/JSON files"); sys.exit(0)
+          bad=[]
+          for p in yamls:
+              try: list(yaml.safe_load_all(p.read_text(encoding="utf-8")))
+              except Exception as e: bad.append(f"{p}: invalid YAML: {e}")
+          for p in jsons:
+              try: json.loads(p.read_text(encoding="utf-8"))
+              except Exception as e: bad.append(f"{p}: invalid JSON: {e}")
+          if bad:
+              for b in bad: print("FAIL:",b)
+              sys.exit(1)
+          print(f"OK: {len(yamls)} YAML + {len(jsons)} JSON file(s) parsed")
+          PY
+
+      - name: Gate C - unit tests if present
+        shell: bash
+        run: |
+          HAS_TESTS=0
+          if [ -d tests ] || compgen -G 'test_*.py' >/dev/null || compgen -G 'tests/test_*.py' >/dev/null; then HAS_TESTS=1; fi
+          if [ "$HAS_TESTS" -eq 0 ]; then
+            echo "SKIP: no tests found"
+            if [ "$STRICT" = "true" ]; then echo "FAIL: STRICT but no tests"; exit 1; fi
+            exit 0
+          fi
+          if python3 -c 'import pytest' 2>/dev/null; then
+            python3 -m pytest -q
+          else
+            python3 -m unittest discover -s tests -v
+          fi
+
+      - name: Gate D - SKILL.md frontmatter
+        shell: bash
+        run: |
+          F=""
+          if [ -f SKILL.md ]; then F=SKILL.md; elif [ -f skill.md ]; then F=skill.md; fi
+          if [ -z "$F" ]; then
+            echo "WARN: SKILL.md not found"
+            if [ "$SKILL_REQUIRE_SKILL_MD" = "true" ]; then echo "FAIL: SKILL.md required"; exit 1; fi
+            exit 0
+          fi
+          head -n 20 "$F" | grep -q '^name:' || { echo "FAIL: missing name: frontmatter"; exit 1; }
+          head -n 20 "$F" | grep -q '^description:' || { echo "FAIL: missing description: frontmatter"; exit 1; }
+          echo "OK: $F present with name/description"
+
+      - name: Gate E - VERSION vs README
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, re, sys
+          from pathlib import Path
+          strict=os.environ.get("STRICT")=="true"
+          vp=Path("VERSION")
+          if not vp.is_file():
+              print("SKIP: no VERSION file")
+              if strict: print("FAIL: STRICT but VERSION missing"); sys.exit(1)
+              sys.exit(0)
+          version=vp.read_text(encoding="utf-8").strip().lstrip("v")
+          readme=Path("README.md")
+          if not readme.is_file():
+              print("SKIP: no README.md"); sys.exit(0)
+          text=readme.read_text(encoding="utf-8",errors="replace")
+          found=set(re.findall(r'v?(\d+\.\d+\.\d+)',text))
+          if not found:
+              print("SKIP: no version token in README")
+              if strict: print("FAIL: STRICT but no README version"); sys.exit(1)
+              sys.exit(0)
+          if version not in found:
+              print(f"FAIL: VERSION={version} not in README tokens={sorted(found)[:8]}"); sys.exit(1)
+          print(f"OK: VERSION {version} matches README")
+          PY
