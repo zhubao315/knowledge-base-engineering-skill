@@ -82,17 +82,21 @@ jobs:
       - name: Gate C - unit tests if present
         shell: bash
         run: |
-          HAS_TESTS=0
-          if [ -d tests ] || compgen -G 'test_*.py' >/dev/null || compgen -G 'tests/test_*.py' >/dev/null; then HAS_TESTS=1; fi
-          if [ "$HAS_TESTS" -eq 0 ]; then
-            echo "SKIP: no tests found"
+          PYTEST_TESTS=0
+          if compgen -G 'test_*.py' >/dev/null || compgen -G 'tests/test_*.py' >/dev/null; then PYTEST_TESTS=1; fi
+          # Prefer the repo's own standard-library regression harness when present.
+          # Running pytest where there are no test_*.py files exits 5 ("no tests ran"),
+          # which is not a test failure but was turning this gate red.
+          if [ -f tests/run_tests.py ]; then
+            python3 tests/run_tests.py
+          elif [ "$PYTEST_TESTS" -eq 1 ]; then
+            python3 -m pip install -q pytest
+            python3 -m pytest -q
+          else
+            echo "SKIP: no runnable tests found"
             if [ "$STRICT" = "true" ]; then echo "FAIL: STRICT but no tests"; exit 1; fi
             exit 0
           fi
-          # Most skill repos use pytest-style test functions, not unittest.TestCase.
-          # pytest is cheap and deterministic; install it when tests exist.
-          python3 -m pip install -q pytest
-          python3 -m pytest -q
 
       - name: Gate D - SKILL.md frontmatter
         shell: bash
